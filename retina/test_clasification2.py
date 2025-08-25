@@ -69,39 +69,13 @@ binary_local = image > local_thresh
 finerBinary = binary_local*binary
 viewer.add_image(finerBinary)
 
-#%% local maxima
-from skimage.feature import peak_local_max
-from skimage.segmentation import expand_labels
-
-local_max_coords = peak_local_max(
-    image, min_distance=5, exclude_border=True, footprint=np.ones((5,5)))
-
-local_max_mask = np.zeros(image.shape, dtype=bool)
-local_max_mask[tuple(local_max_coords.T)] = True
-
-markers = ski.measure.label(local_max_mask*finerBinary)
-#viewer.add_labels(markers,colormap=glas)
-
-expanded = expand_labels(markers, distance=4)
-
-viewer.add_labels(expanded,colormap=glas)
-
-
-
-#%% canny edge detector
-from skimage import feature
-from skimage.morphology import binary_closing
-_edgesCanny = feature.canny(image)
-edgesCanny = binary_closing(_edgesCanny, footprint=np.ones((3,3)))
-viewer.add_image(~edgesCanny*finerBinary)
-
 
 #%% blob detection
-from math import sqrt
 from skimage import data
 from skimage.feature import blob_dog, blob_log, blob_doh
-from skimage.color import rgb2gray
 from skimage.draw import disk
+from skimage.segmentation import expand_labels
+
 
 blobs_log = blob_log(image*binary, max_sigma=5, min_sigma=2, overlap=0.5, threshold=0.0001)
 labels_data = np.zeros_like(image)
@@ -109,7 +83,6 @@ labels_data = np.zeros_like(image)
 for ii,_blob in enumerate(blobs_log):
 
     rr, cc = disk((_blob[0], _blob[1]), _blob[2], shape=image.shape)
-    #rr, cc = int(_blob[0]),int(_blob[1])
 
 # Assign a label value (e.g., 1) to the circular area
     label_value = ii+1
@@ -121,12 +94,16 @@ expanded = expand_labels(labels_data, distance=1)
 viewer.add_labels(expanded,colormap=glas, name='blob')
 
 
+#%% true labels to my labels
+
+idxToClass = np.vstack((expanded[classImage>0],classImage[classImage>0]))
+
 
 #%% get the clarification parameters
 from scipy import ndimage as ndi
 import matplotlib.pyplot as plt
 distance = ndi.distance_transform_edt(expanded>0)
-viewer.add_image(distance, name='distanced')
+#viewer.add_image(distance, name='distanced')
 
 nLabel = np.max(expanded)
 
@@ -137,21 +114,30 @@ fig, ax = plt.subplots()
 #for ii in range(nLabel):
 mask = expanded==ii
 intIdx = image[mask]
-disIdx = distance[mask]
 tauIdx = tau[mask]
 
-disMax = np.max(disIdx)
-radius = np.linspace(1,int(disMax), int(disMax)*10)
+_disIdx = distance[mask]
+disMax = np.max(_disIdx)
+disIdx = (disMax - _disIdx)/(disMax-1)
+
+radius = np.linspace(0,1,10)
 
 ax.scatter(disIdx.ravel(),intIdx.ravel())
 z = np.polyfit(disIdx, intIdx, 2)
-ax.scatter(radius,np.poly1d(z)(radius))
+ax.plot(radius,np.poly1d(z)(radius))
 
+maxInt = np.max(np.poly1d(z)(radius))
+ratioInt = np.poly1d(z)(0)/maxInt
+print(f'intensity ratio {ratioInt}')
 
 fig, ax = plt.subplots()
 z = np.polyfit(disIdx, tauIdx, 2)
 ax.scatter(disIdx.ravel(),tauIdx.ravel())
-ax.scatter(radius,np.poly1d(z)(radius))
+ax.plot(radius,np.poly1d(z)(radius))
+
+maxTau = np.max(np.poly1d(z)(radius))
+ratioTau = np.poly1d(z)(1)/maxTau
+print(f'tau ratio {ratioTau}')
 
 
 
