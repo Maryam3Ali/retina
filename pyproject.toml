@@ -12,7 +12,8 @@ dependencies = [
         'pytest',
         'panda',
         'odfpy'
-        'tifffile'
+        'tifffile',
+        'scipy',
         ]
 requires-python='>=3.9'
 authors = [
