@@ -11,18 +11,18 @@ from classificationFunction import *
 ffolder = r'G:\office\work\git\retina\DATA\2018004_1_1'
 imageFile = '2018004_71_960nm_116fr_3Pro_1_1-Ch2-_intensity_image.tif'
 tauFile = '2018004_1_1_tm_Ch2.xlsx'
-#classFile = '2018004_1_1_ch2_classification.ods'
-#columnName = 'classification'
-classFile = '2018004_1_1_ch2_classification2.xlsx'
-columnName = 'classification_Hala'
+classFile = '2018004_1_1_ch2_classification.ods'
+columnName = 'classification'
+#classFile = '2018004_1_1_ch2_classification2.xlsx'
+#columnName = 'classification_Hala'
 
-labelFile = '2018004_1_1_ch2_labels.txt'
+#labelFile = '2018004_1_1_ch2_labels.txt'
 
 
 #%% process data
 
 image, tau = loadData(ffolder, imageFile,tauFile)
-classImage = loadClassification(ffolder,classFile)
+classImage = loadClassification(ffolder,classFile,imageSize= image.shape, columnName= columnName)
 intTauImage = getTauIntensityImage(image,tau)
 
 # show original data
@@ -84,7 +84,7 @@ radius, intFit, tauFit = getProfiles(image, tau,melLabel, nPoly=2)
 fig, ax = plt.subplots()
 
 for ii,_color in enumerate(GrainId.colorMPL):
-    ax.plot(radius,tauFit[melGTClass==ii,:].T,color=_color)
+    ax.plot(radius,tauFit[melGTClass==ii+1,:].T,color=_color)
     ax.set_title('tau profile')
     ax.set_ylabel('tau /ns')
     ax.set_xlabel('radius ')
@@ -97,11 +97,15 @@ maxTau = np.max(tauFit,axis=1)
 ratioInt = intFit[:,0]/maxInt
 ratioTau = tauFit[:,-1]/tauFit[:,0]
 
+'''
 medTau = np.median(maxTau)
 medInt = np.median(maxInt)
 thrTau = 0.8
 thrInt = 0.75
-thrTauRatio = 1.15
+'''
+#thrTauRatio = 1.15
+thrTauRatio = 1.0
+
 
 fig, ax = plt.subplots()
 
