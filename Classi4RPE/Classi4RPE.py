@@ -1,5 +1,3 @@
-
-
 '''Classi4RPE is a computational program to segment and classify
  the granules of Retinal Pigment Epithelium cells RPE
  
@@ -21,7 +19,7 @@
 
 
 import pandas as pd
-from sdtfile import SdtFile
+from tkinter import filedialog
 import numpy as np
 import tifffile
 import napari
@@ -33,42 +31,47 @@ from skimage.segmentation import find_boundaries
 
 from Functions_Classi4RPE import *
 
-#%%  Parameters
-#Reading the intensity (.tif) file with the lifetime raw data
- 
+
+#%% Importing files
+# Browsing files by order of: Intensity Image, then ascii files for the fitting (12 asciis), and filnally sdt
+
+file_list = []
+
+print('Please select the files by this order: Intensity Image, 12 ascii fitting files, and sdt')
+
+
+tif_file = filedialog.askopenfilenames(title = 'Please select the intensity Image', filetypes = (('Tif Image', '*.tif*'), 
+                                                                                         ('All files', '*.*')))
+
+asc_file = filedialog.askopenfilenames(title = 'Please select asci files', filetypes = (('ASCII', '*.asc*'),
+                                                                                         ('All files', '*.*')))
+
+sdt_file = filedialog.askopenfilenames(title = 'Please select sdt file', filetypes = (('Sdt', '*.sdt*'), 
+                                                                                         ('All files', '*.*')))
+
+file_list.append(tif_file)
+file_list.append(asc_file)
+file_list.append(sdt_file)
+
+print('you selected those:')
+for f in file_list:
+    print(f)
+
+#%% For ground truth data reading
 
 ffolder = r'C:\Users\DELL\Documents\HiResi4RPE\segmentation\Img_Segmentation_test\Test_seg_class\2018004_1_1_ch2'
-imageFile = '2018004_71_960nm_116fr_3Pro_1_1-Ch2-_intensity_image.tif'
-
 #Ground truth classification file
 classFile = '2018004_1_1.xlsx'
 columnName = 'classification'
 
-#Reading asc. files for fitted lifetimes (from other software),
-#and find the mean lifetime values
+#%% Reading the data
 
-#channel 1
-ch1_data = ["2018004_71_960nm_116fr_3Pro_1_1-Ch1-_a1[%].asc", "2018004_71_960nm_116fr_3Pro_1_1-Ch1-_a2[%].asc", 
-            "2018004_71_960nm_116fr_3Pro_1_1-Ch1-_a3[%].asc", "2018004_71_960nm_116fr_3Pro_1_1-Ch1-_t1.asc",
-            "2018004_71_960nm_116fr_3Pro_1_1-Ch1-_t2.asc", "2018004_71_960nm_116fr_3Pro_1_1-Ch1-_t3.asc"]
-#channel 2
-ch2_data = ["2018004_71_960nm_116fr_3Pro_1_1-Ch2-_a1[%].asc", "2018004_71_960nm_116fr_3Pro_1_1-Ch2-_a2[%].asc", 
-            "2018004_71_960nm_116fr_3Pro_1_1-Ch2-_a3[%].asc", "2018004_71_960nm_116fr_3Pro_1_1-Ch2-_t1.asc",
-            "2018004_71_960nm_116fr_3Pro_1_1-Ch2-_t2.asc", "2018004_71_960nm_116fr_3Pro_1_1-Ch2-_t3.asc"]
-
-tau1 = read_asc(ch1_data)
-tau2 = read_asc(ch2_data)
-
-
-#reading sdt file exported from FLIM device to calculate no. of photons per granule at the end
-data_sdt = SdtFile('2019003_52_960nm_116fr_3Pro_01_01.sdt')
-sdt_d = np.array(data_sdt.data)
+tau1, tau2, image, sdt_d = Import_data(file_list)
 
 
 
 #%% Processing the lifetime values with the intensity image (Visualize the lifetime image)
 
-image = image = tifffile.imread(ffolder +'/' + imageFile)
 classImage = loadClassification(ffolder,classFile,imageSize= image.shape, columnName= columnName)
 intTauImage = getTauIntensityImage(image,tau2)
 
@@ -123,8 +126,8 @@ melBinary = getMask(melImage)
 # By seeded water shedding
 # expansion was optimized based on the tested data sets (to reasonably matching the exact size of the granules)
 
-melLabel = seeded_water_shed(melImage*melBinary, min_distance = 7, expansion=1)
-lipLabel = seeded_water_shed(lipImage*lipBinary, min_distance = 3, expansion = 0)
+melLabel = seeded_water_shed(melImage*melBinary, min_distance = 7, expansion=2)
+lipLabel = seeded_water_shed(lipImage*lipBinary, min_distance = 3, expansion = 1)
 
 # Optional: another segmentation approach (Blobs)
 #melLabel, _nBlob1 = getGranule(melImage,melBinary,min_sigma=2, max_sigma=4, extraExpansion=2)
