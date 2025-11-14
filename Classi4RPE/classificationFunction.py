@@ -37,7 +37,30 @@ class GrainId:
     colorMPL = np.array(['red', 'green','blue','white'])
     colorNapari = {1:[1,0,0],2:[0,1,0],3:[0,0,1], 4:[1,1,1]}
 
+def Import_data(file_list):
+    #Intensity Image
+    image = tifffile.imread(file_list[0])
+    
+    #sdt file
+    s_sdt = (file_list[2][0]).rstrip(",")
+    data_sdt = SdtFile(s_sdt)
+    sdt = np.array(data_sdt.data)
+    
+    # Ascii files
+    ch1_data = [file_list[1][0], file_list[1][1],
+              file_list[1][2], file_list[1][3],
+              file_list[1][4], file_list[1][5]]
+    
+    ch2_data = [file_list[1][6], file_list[1][7],
+              file_list[1][8], file_list[1][9],
+              file_list[1][10], file_list[1][11]]
+    
+    tau1 = read_asc(ch1_data)
+    tau2 = read_asc(ch2_data)
 
+    
+    return tau1, tau2, image, sdt
+    
 def loadData(ffolder, imageFile,tauFile):
     # load measured data
     image = tifffile.imread(ffolder +'/' + imageFile)
