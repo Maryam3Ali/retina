@@ -6,6 +6,8 @@ import napari
 import matplotlib.pyplot as plt
 import tifffile
 import pandas as pd
+from sdtfile import SdtFile
+
 #import glasbey
 from skimage.color import hsv2rgb, rgb2hsv
 from scipy.stats import binned_statistic_2d
