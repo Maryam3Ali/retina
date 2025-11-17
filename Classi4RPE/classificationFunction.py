@@ -39,6 +39,19 @@ class GrainId:
     colorMPL = np.array(['red', 'green','blue','white'])
     colorNapari = {1:[1,0,0],2:[0,1,0],3:[0,0,1], 4:[1,1,1]}
 
+def read_asc(channel_data, folder):
+    data = []
+    for j in range(6):
+        with open(folder+'/' +channel_data[j]) as f:
+            ch_data = ([line.strip() for line in f if line.strip()])
+            f_asc = np.array([np.fromstring(x.strip("[]"), sep=' ') for x in ch_data], dtype=float)[::-1,:]
+            data.append(f_asc)
+    channel_arrays = np.array(data)
+    tau_asc_v = (channel_arrays[0] * channel_arrays[3]) + (channel_arrays[1] * channel_arrays[4]) + (channel_arrays[2] * channel_arrays[5])
+    alpha = channel_arrays[0] + channel_arrays[1] + channel_arrays[2]
+    tau_asc = np.divide(tau_asc_v, alpha, out = np.zeros_like(tau_asc_v, dtype=float), where=alpha!=0)
+    return tau_asc
+
 def Import_data(file_list):
     #Intensity Image
     image = tifffile.imread(file_list[0])
